@@ -1,0 +1,56 @@
+# ros2_control controller_manager configuration for the 12-joint biped.
+#
+# This file documents the PRODUCTION path mentioned in the HUMANOID-LAB
+# proposal: driving the robot through mujoco_ros2_control + ros2_control's
+# joint_trajectory_controller, instead of this repo's lighter-weight
+# humanoid_sim/mujoco_bridge_node (which talks to MuJoCo directly and is
+# what the Stage launch files actually use, since mujoco_ros2_control
+# itself could not be installed/verified in the environment this repo was
+# configured in -- see docs/ARCHITECTURE.md).
+#
+# To switch to this path: install ros-${ROS_DISTRO}-ros2-control,
+# ros-${ROS_DISTRO}-ros2-controllers and mujoco_ros2_control, point its
+# <mujoco> tag at humanoid_sim/mujoco_models/humanoid_biped.xml, and launch
+# controller_manager with this file instead of humanoid_sim's bridge.
+
+controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    leg_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    imu_sensor_broadcaster:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
+
+leg_trajectory_controller:
+  ros__parameters:
+    joints:
+      - right_hip_yaw_joint
+      - right_hip_roll_joint
+      - right_hip_pitch_joint
+      - right_knee_pitch_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+      - left_hip_yaw_joint
+      - left_hip_roll_joint
+      - left_hip_pitch_joint
+      - left_knee_pitch_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: true
+
+imu_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: torso_imu
+    frame_id: torso_link

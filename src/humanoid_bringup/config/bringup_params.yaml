@@ -1,0 +1,34 @@
+# Shared tunables for the humanoid_bringup stage launch files. Values here
+# mirror the per-node parameter defaults; override at launch time with
+# --ros-args --params-file, or just edit this file directly.
+
+balance_controller:
+  ros__parameters:
+    kp_pitch: 10.0
+    kd_pitch: 0.3
+    kp_roll: 10.0
+    kd_roll: 0.3
+    max_correction_rad: 0.2
+    nominal_com_height_m: 0.55
+    icp_gain: 0.5
+
+gait_planner:
+  ros__parameters:
+    num_steps: 6
+    stride_length_m: 0.04
+    step_width_m: 0.20
+    step_height_m: 0.04
+    step_duration_s: 0.6
+    start_foot: "right"
+
+safety_supervisor:
+  ros__parameters:
+    max_imu_age_s: 0.15
+    max_joint_tracking_error_rad: 0.70
+    max_joint_age_s: 0.35
+    startup_grace_s: 1.0
+    contact_loss_timeout_s: 0.25
+
+mission_manager:
+  ros__parameters:
+    num_steps: 6

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://download.ros.org/schema/package_format3.xsd"?>
+<package format="3">
+  <name>humanoid_description</name>
+  <version>0.1.0</version>
+  <description>URDF/xacro description, TF frames and RViz display launch for the HUMANOID-LAB simplified biped.</description>
+  <maintainer email="maintainers@users.noreply.github.com">HUMANOID-LAB contributors</maintainer>
+  <license>MIT</license>
+
+  <depend>xacro</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>joint_state_publisher_gui</depend>
+  <depend>rviz2</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

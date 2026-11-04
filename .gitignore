@@ -1,0 +1,25 @@
+# colcon
+build/
+install/
+log/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# logs/output from humanoid_benchmarks
+*.csv
+*.png
+!docs/**/*.png
+
+# unreviewed local experiment outputs (never claim generated success)
+results/local/
+.DS_Store

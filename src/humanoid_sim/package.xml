@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://download.ros.org/schema/package_format3.xsd"?>
+<package format="3">
+  <name>humanoid_sim</name>
+  <version>0.1.0</version>
+  <description>MuJoCo physics bridge: steps the biped MJCF and publishes joint_states/imu, subscribes to actuator commands.</description>
+  <maintainer email="maintainers@users.noreply.github.com">HUMANOID-LAB contributors</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>humanoid_kinematics</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

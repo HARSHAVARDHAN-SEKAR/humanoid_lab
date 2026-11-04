@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://download.ros.org/schema/package_format3.xsd"?>
+<package format="3">
+  <name>humanoid_bringup</name>
+  <version>0.1.0</version>
+  <description>Per-stage launch files (1: joint control, 2: standing, 3: stepping, 4: walking, 5: disturbance bench) and params.</description>
+  <maintainer email="maintainers@users.noreply.github.com">HUMANOID-LAB contributors</maintainer>
+  <license>MIT</license>
+
+  <depend>humanoid_description</depend>
+  <depend>humanoid_sim</depend>
+  <depend>humanoid_state_estimator</depend>
+  <depend>humanoid_kinematics</depend>
+  <depend>humanoid_gait_planner</depend>
+  <depend>humanoid_balance_controller</depend>
+  <depend>humanoid_safety</depend>
+  <depend>humanoid_mission_manager</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+  <exec_depend>humanoid_motion_controller</exec_depend>
+  <exec_depend>humanoid_benchmarks</exec_depend>
+</package>

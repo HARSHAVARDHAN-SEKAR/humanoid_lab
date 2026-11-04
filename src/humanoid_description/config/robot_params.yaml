@@ -1,0 +1,17 @@
+# Canonical physical parameters for the HUMANOID-LAB simplified biped
+# (Stage 1-3 development model). Every other file that encodes these
+# numbers -- the MJCF scene, the URDF/xacro, and the kinematics unit tests
+# -- is expected to match this file; tests/test_sim_consistency.py checks
+# the MJCF against it so the three can't silently drift apart.
+leg:
+  thigh_length_m: 0.30
+  shank_length_m: 0.30
+hip_width_m: 0.20
+ankle_to_sole_offset_m: 0.03   # vertical offset from ankle-roll joint to the sole
+standing_pose:
+  # Nominal standing target for the ankle, relative to the hip (x forward, z up).
+  # Slightly short of full leg extension (|x|=0, |z|=0.6) so the knee keeps a
+  # small bend -- a fully straight knee sits exactly on the IK singularity.
+  foot_x_m: 0.0
+  foot_z_m: -0.55
+robot_mass_kg_approx: 25.0   # informational only -- actual mass comes from the MJCF/URDF

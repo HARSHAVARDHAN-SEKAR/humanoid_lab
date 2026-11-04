@@ -1,0 +1,8 @@
+# For running the pure-python test suite and tools/ scripts WITHOUT a ROS 2
+# install. A full ROS 2 build additionally needs rosdep-installed system
+# packages -- see README.md.
+numpy>=1.24
+pyyaml>=6.0
+mujoco>=3.0
+pytest>=7.0,<8.0  # ROS 2 Humble launch_testing compatibility; Makefile also disables plugin autoload
+matplotlib>=3.7

@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<robot name="humanoid_lab_biped" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    Simplified 12-DOF biped description (Stage 1), for RViz/TF and
+    robot_state_publisher. Mirrors src/humanoid_sim/mujoco_models/humanoid_biped.xml
+    joint-for-joint; link lengths come from config/robot_params.yaml and
+    MUST be kept in sync with that file and the MJCF
+    (tests/test_sim_consistency.py checks the MJCF side of that).
+
+    This is a visualization/TF description, not a dynamics model: inertial
+    blocks here are simplified cylinders/boxes with illustrative mass, not
+    tuned to match the MJCF's values exactly. Physics is MuJoCo's job (see
+    humanoid_sim); this file exists for RViz display, TF, and (optionally)
+    providing hardware_interface tags for ros2_control on real hardware.
+  -->
+
+  <xacro:property name="thigh_length" value="0.30"/>
+  <xacro:property name="shank_length" value="0.30"/>
+  <xacro:property name="hip_width" value="0.20"/>
+  <xacro:property name="link_radius" value="0.045"/>
+
+  <material name="grey"><color rgba="0.6 0.6 0.65 1.0"/></material>
+  <material name="dark"><color rgba="0.25 0.25 0.28 1.0"/></material>
+
+  <link name="base_link"/>
+
+  <link name="torso_link">
+    <visual>
+      <origin xyz="0 0 0.10"/>
+      <geometry><box size="0.18 0.28 0.36"/></geometry>
+      <material name="grey"/>
+    </visual>
+    <inertial>
+      <mass value="12.0"/>
+      <origin xyz="0 0 0.10"/>
+      <inertia ixx="0.15" iyy="0.12" izz="0.10" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="base_to_torso" type="fixed">
+    <parent link="base_link"/>
+    <child link="torso_link"/>
+  </joint>
+
+  <xacro:macro name="leg" params="side y_sign roll_yaw_sign">
+    <link name="${side}_hip_yaw_link">
+      <visual><geometry><sphere radius="0.035"/></geometry><material name="dark"/></visual>
+      <inertial><mass value="0.4"/><inertia ixx="0.0003" iyy="0.0003" izz="0.0003" ixy="0" ixz="0" iyz="0"/></inertial>
+    </link>
+    <joint name="${side}_hip_yaw_joint" type="revolute">
+      <parent link="torso_link"/>
+      <child link="${side}_hip_yaw_link"/>
+      <origin xyz="0 ${y_sign * 0.10} 0"/>
+      <axis xyz="0 0 ${roll_yaw_sign}"/>
+      <limit lower="-0.6" upper="0.6" effort="60" velocity="4"/>
+    </joint>
+
+    <link name="${side}_hip_roll_link">
+      <visual><geometry><sphere radius="0.035"/></geometry><material name="dark"/></visual>
+      <inertial><mass value="0.4"/><inertia ixx="0.0003" iyy="0.0003" izz="0.0003" ixy="0" ixz="0" iyz="0"/></inertial>
+    </link>
+    <joint name="${side}_hip_roll_joint" type="revolute">
+      <parent link="${side}_hip_yaw_link"/>
+      <child link="${side}_hip_roll_link"/>
+      <axis xyz="${roll_yaw_sign} 0 0"/>
+      <limit lower="-0.5" upper="0.5" effort="60" velocity="4"/>
+    </joint>
+
+    <link name="${side}_thigh_link">
+      <visual>
+        <origin xyz="0 0 ${-thigh_length/2}"/>
+        <geometry><cylinder radius="${link_radius}" length="${thigh_length}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <inertial>
+        <mass value="3.0"/>
+        <origin xyz="0 0 ${-thigh_length/2}"/>
+        <inertia ixx="0.03" iyy="0.03" izz="0.004" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${side}_hip_pitch_joint" type="revolute">
+      <parent link="${side}_hip_roll_link"/>
+      <child link="${side}_thigh_link"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="-1.8" upper="1.2" effort="100" velocity="6"/>
+    </joint>
+
+    <link name="${side}_shank_link">
+      <visual>
+        <origin xyz="0 0 ${-shank_length/2}"/>
+        <geometry><cylinder radius="0.035" length="${shank_length}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <inertial>
+        <mass value="2.0"/>
+        <origin xyz="0 0 ${-shank_length/2}"/>
+        <inertia ixx="0.02" iyy="0.02" izz="0.003" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${side}_knee_pitch_joint" type="revolute">
+      <parent link="${side}_thigh_link"/>
+      <child link="${side}_shank_link"/>
+      <origin xyz="0 0 ${-thigh_length}"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0.0" upper="2.5" effort="100" velocity="6"/>
+    </joint>
+
+    <link name="${side}_ankle_pitch_link">
+      <visual><geometry><sphere radius="0.02"/></geometry><material name="dark"/></visual>
+      <inertial><mass value="0.15"/><inertia ixx="0.0001" iyy="0.0001" izz="0.0001" ixy="0" ixz="0" iyz="0"/></inertial>
+    </link>
+    <joint name="${side}_ankle_pitch_joint" type="revolute">
+      <parent link="${side}_shank_link"/>
+      <child link="${side}_ankle_pitch_link"/>
+      <origin xyz="0 0 ${-shank_length}"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="-1.0" upper="1.0" effort="60" velocity="6"/>
+    </joint>
+
+    <link name="${side}_foot_link">
+      <visual>
+        <origin xyz="0.03 0 -0.015"/>
+        <geometry><box size="0.22 0.10 0.03"/></geometry>
+        <material name="dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.03 0 -0.015"/>
+        <geometry><box size="0.22 0.10 0.03"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0.03 0 -0.015"/>
+        <inertia ixx="0.0004" iyy="0.001" izz="0.001" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${side}_ankle_roll_joint" type="revolute">
+      <parent link="${side}_ankle_pitch_link"/>
+      <child link="${side}_foot_link"/>
+      <axis xyz="${roll_yaw_sign} 0 0"/>
+      <limit lower="-0.5" upper="0.5" effort="60" velocity="4"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:leg side="right" y_sign="-1" roll_yaw_sign="1"/>
+  <xacro:leg side="left" y_sign="1" roll_yaw_sign="-1"/>
+</robot>

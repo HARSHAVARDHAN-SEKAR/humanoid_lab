@@ -1,0 +1,16 @@
+# Optional development shell for Ubuntu. Default profile is headless.
+#   docker compose run --rm humanoid-lab bash
+#   docker compose run --rm humanoid-lab python3 -m pytest -q -rs
+services:
+  humanoid-lab:
+    build:
+      context: .
+      args:
+        ROS_DISTRO: humble
+    image: humanoid-lab:humble
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./src:/workspace/humanoid_lab_ws/src:ro
+      - ./tests:/workspace/humanoid_lab_ws/tests:ro
+      - ./results/local:/workspace/humanoid_lab_ws/results/local

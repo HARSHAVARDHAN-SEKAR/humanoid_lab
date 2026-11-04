@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>humanoid_motion_controller</name>
+  <version>0.2.0</version>
+  <description>Safety gated 12-joint IK command interface between gait and MuJoCo.</description>
+  <maintainer email="maintainers@users.noreply.github.com">HUMANOID-LAB contributors</maintainer>
+  <license>MIT</license>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>humanoid_kinematics</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>
