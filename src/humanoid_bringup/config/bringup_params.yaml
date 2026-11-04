@@ -18,7 +18,7 @@ gait_planner:
     stride_length_m: 0.04
     step_width_m: 0.20
     step_height_m: 0.04
-    step_duration_s: 0.6
+    step_duration_s: 2.0
     start_foot: "right"
 
 safety_supervisor:

@@ -120,10 +120,13 @@ class MissionManagerNode(Node):
 
     def _tick(self):
         cmd = MissionCommand(
-            start=self._start,
-            begin_walk=self._begin_walk,
-            stop=self._stop,
-            steps_remaining=self._steps_remaining,
+             start=self._start,
+             begin_walk=(
+                 self._begin_walk
+                 and self._steps_remaining > 0
+             ),
+             stop=self._stop,
+             steps_remaining=self._steps_remaining,
         )
         phase = self.fsm.step(cmd, self._safety_state)
         self.phase_pub.publish(String(data=phase.name))
