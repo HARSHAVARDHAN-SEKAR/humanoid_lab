@@ -1,0 +1,75 @@
+{
+  "description": "Stage 6L sampled polygon-window analysis",
+  "caveat": "No continuous-time guarantee; gaps between samples unobserved.",
+  "cases": [
+    {
+      "file": "stage6l_ros_40N_forward.csv",
+      "columns": [
+        "elapsed_wall_s",
+        "com_x_m",
+        "com_vx_mps",
+        "torso_height_m",
+        "torso_tilt_deg",
+        "ankle_pitch_correction_rad",
+        "left_force_N",
+        "right_force_N",
+        "support_polygon_valid",
+        "support_margin_m",
+        "loaded_contact_points",
+        "controller_mode",
+        "safety_state"
+      ],
+      "time_column": "elapsed_wall_s",
+      "validity_column": "support_polygon_valid",
+      "margin_column": "support_margin_m",
+      "vertex_column": null,
+      "sample_count": 425,
+      "valid_count": 425,
+      "invalid_count": 0,
+      "invalid_fraction": 0.0,
+      "negative_margin_count": 0,
+      "sample_period_s": 0.020000000000000018,
+      "invalid_sampled_duration_s": 0.0,
+      "invalid_windows": []
+    },
+    {
+      "file": "stage6l_ros_40N_backward.csv",
+      "columns": [
+        "elapsed_wall_s",
+        "com_x_m",
+        "com_vx_mps",
+        "torso_height_m",
+        "torso_tilt_deg",
+        "ankle_pitch_correction_rad",
+        "left_force_N",
+        "right_force_N",
+        "support_polygon_valid",
+        "support_margin_m",
+        "loaded_contact_points",
+        "controller_mode",
+        "safety_state"
+      ],
+      "time_column": "elapsed_wall_s",
+      "validity_column": "support_polygon_valid",
+      "margin_column": "support_margin_m",
+      "vertex_column": null,
+      "sample_count": 426,
+      "valid_count": 387,
+      "invalid_count": 39,
+      "invalid_fraction": 0.09155,
+      "negative_margin_count": 0,
+      "sample_period_s": 0.020000000000000018,
+      "invalid_sampled_duration_s": 0.78,
+      "invalid_windows": [
+        {
+          "first_sample": 106,
+          "last_sample": 144,
+          "sample_count": 39,
+          "start_time_s": 2.14,
+          "end_time_s": 2.8998,
+          "estimated_sampled_duration_s": 0.78
+        }
+      ]
+    }
+  ]
+}

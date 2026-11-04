@@ -11,6 +11,7 @@ ENV ROS_DISTRO=${ROS_DISTRO} \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip python3-colcon-common-extensions python3-rosdep \
     libgl1 libegl1 libglfw3 libosmesa6 \
+    ffmpeg \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-robot-state-publisher \
     ros-${ROS_DISTRO}-joint-state-publisher-gui \
