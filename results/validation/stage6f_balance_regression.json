@@ -1,0 +1,133 @@
+{
+  "controller": "negative sagittal CoM PD",
+  "gains": {
+    "kp": 2.5,
+    "kd": 0.35,
+    "max_correction_rad": 0.12,
+    "max_rate_rad_s": 1.0
+  },
+  "results": [
+    {
+      "case": "20N_forward",
+      "peak_com_deviation_m": 0.0078016088833389,
+      "final_com_deviation_m": 5.427210087085438e-05,
+      "max_torso_tilt_deg": 1.4173471138185219,
+      "minimum_support_margin_m": 0.048636031413797874,
+      "max_joint_error_rad": 0.043644402029504925,
+      "final_com_x_velocity_mps": 1.377974123694887e-10,
+      "pass": true
+    },
+    {
+      "case": "20N_backward",
+      "peak_com_deviation_m": 0.0078747759034008,
+      "final_com_deviation_m": 5.053266938417206e-05,
+      "max_torso_tilt_deg": 1.1408089782472541,
+      "minimum_support_margin_m": 0.042832610669836554,
+      "max_joint_error_rad": 0.06894613996371812,
+      "final_com_x_velocity_mps": 1.4517415047873066e-10,
+      "pass": true
+    },
+    {
+      "case": "30N_forward",
+      "peak_com_deviation_m": 0.011831950290266884,
+      "final_com_deviation_m": 8.256184454714585e-05,
+      "max_torso_tilt_deg": 2.0621738292590437,
+      "minimum_support_margin_m": 0.047318424488701584,
+      "max_joint_error_rad": 0.0493975490430949,
+      "final_com_x_velocity_mps": 1.4646305002138111e-10,
+      "pass": true
+    },
+    {
+      "case": "30N_backward",
+      "peak_com_deviation_m": 0.013441130836073484,
+      "final_com_deviation_m": 0.00011132080973779657,
+      "max_torso_tilt_deg": 2.003114086363393,
+      "minimum_support_margin_m": 0.037883888782855445,
+      "max_joint_error_rad": 0.08481966004791064,
+      "final_com_x_velocity_mps": 1.3518110242302112e-10,
+      "pass": false
+    },
+    {
+      "case": "40N_forward",
+      "peak_com_deviation_m": 0.015860645143280602,
+      "final_com_deviation_m": 0.00011149259264496558,
+      "max_torso_tilt_deg": 2.7068459216642315,
+      "minimum_support_margin_m": 0.045992631284848644,
+      "max_joint_error_rad": 0.05511389071260442,
+      "final_com_x_velocity_mps": 1.5279340292991413e-10,
+      "pass": true
+    },
+    {
+      "case": "40N_backward",
+      "peak_com_deviation_m": 0.02528461072761284,
+      "final_com_deviation_m": 0.0001545352511026464,
+      "max_torso_tilt_deg": 3.383856259137908,
+      "minimum_support_margin_m": 0.03466603785258197,
+      "max_joint_error_rad": 0.09680610215424218,
+      "final_com_x_velocity_mps": 1.793773463098618e-11,
+      "pass": false
+    },
+    {
+      "case": "45N_forward",
+      "peak_com_deviation_m": 0.0178749973534189,
+      "final_com_deviation_m": 0.00012617652067383606,
+      "max_torso_tilt_deg": 3.029294674152932,
+      "minimum_support_margin_m": 0.04532715217092943,
+      "max_joint_error_rad": 0.05795929172550374,
+      "final_com_x_velocity_mps": 1.4689152671994728e-10,
+      "pass": true
+    },
+    {
+      "case": "45N_backward",
+      "peak_com_deviation_m": 0.036987801281629984,
+      "final_com_deviation_m": 0.00016532660278745226,
+      "max_torso_tilt_deg": 4.636235832074465,
+      "minimum_support_margin_m": 0.03159090715542371,
+      "max_joint_error_rad": 0.10314320579993547,
+      "final_com_x_velocity_mps": 1.6292175941674983e-11,
+      "pass": false
+    },
+    {
+      "case": "20N_left",
+      "peak_com_deviation_m": 0.01256287059086643,
+      "final_com_deviation_m": 0.00017526354653161577,
+      "max_torso_tilt_deg": 0.5948828348867284,
+      "minimum_support_margin_m": 0.05046081292083647,
+      "max_joint_error_rad": 0.04035673568331488,
+      "final_com_x_velocity_mps": 1.3451458696908146e-09,
+      "pass": true
+    },
+    {
+      "case": "20N_right",
+      "peak_com_deviation_m": 0.01256287059086647,
+      "final_com_deviation_m": 0.0001752635465197755,
+      "max_torso_tilt_deg": 0.5948828348867284,
+      "minimum_support_margin_m": 0.05046081292083645,
+      "max_joint_error_rad": 0.04035673568331477,
+      "final_com_x_velocity_mps": 1.345144828856729e-09,
+      "pass": true
+    },
+    {
+      "case": "40N_left",
+      "peak_com_deviation_m": 0.02709686975481207,
+      "final_com_deviation_m": 0.00043741135189097444,
+      "max_torso_tilt_deg": 1.414539943392317,
+      "minimum_support_margin_m": 0.05047739783239065,
+      "max_joint_error_rad": 0.05523125656931246,
+      "final_com_x_velocity_mps": 1.0085491781994552e-07,
+      "pass": true
+    },
+    {
+      "case": "40N_right",
+      "peak_com_deviation_m": 0.027096869754812056,
+      "final_com_deviation_m": 0.0004374113518748919,
+      "max_torso_tilt_deg": 1.414539943392317,
+      "minimum_support_margin_m": 0.05047739783239065,
+      "max_joint_error_rad": 0.05523125656931251,
+      "final_com_x_velocity_mps": 1.0085491781994552e-07,
+      "pass": true
+    }
+  ],
+  "passed": 9,
+  "total": 12
+}

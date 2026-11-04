@@ -1,0 +1,11 @@
+{
+  "force_N": 20.0,
+  "duration_s": 0.10000000000000009,
+  "nominal_impulse_Ns": 2.0000000000000018,
+  "peak_com_difference_m": 0.020584498010302356,
+  "final_com_difference_m": 0.0005472919935922832,
+  "final_com_speed_mps": 0.0033039139032716536,
+  "maximum_tilt_deg": 2.294447560402544,
+  "minimum_torso_height_m": 0.5745768360651117,
+  "minimum_support_margin_m": 0.033365166265829097
+}

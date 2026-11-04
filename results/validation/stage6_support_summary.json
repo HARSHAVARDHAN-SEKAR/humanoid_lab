@@ -1,0 +1,11 @@
+{
+  "duration_s": 30.0,
+  "samples": 301,
+  "mass_kg": 24.9,
+  "minimum_support_margin_m": 0.04062958167805691,
+  "double_support_fraction": 1.0,
+  "max_torso_tilt_deg": 1.3013902960838082,
+  "maximum_nonfoot_floor_contacts": 0,
+  "samples_with_polygon": 299,
+  "steady_samples": 299
+}

@@ -8,8 +8,8 @@ data_files = [
     ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
     ("share/" + package_name, ["package.xml"]),
 ]
-data_files.append(("share/" + package_name + "/launch", glob("launch/**/*", recursive=True)))
-data_files.append(("share/" + package_name + "/config", glob("config/**/*", recursive=True)))
+data_files.append(("share/" + package_name + "/launch", [f for f in glob("launch/**/*", recursive=True) if os.path.isfile(f)]))
+data_files.append(("share/" + package_name + "/config", [f for f in glob("config/**/*", recursive=True) if os.path.isfile(f)]))
 
 setup(
     name=package_name,
