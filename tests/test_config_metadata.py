@@ -36,3 +36,25 @@ def test_launch_python_files_parse_without_ros():
 def test_ros_smoke_and_publication_scripts_exist():
     assert (ROOT / 'scripts/ros_smoke.sh').is_file()
     assert (ROOT / 'scripts/publish_github.sh').is_file()
+
+
+def test_urdf_launch_keeps_robot_description_as_string():
+    """Prevent Humble from parsing the xacro-expanded URDF XML as YAML."""
+    path = ROOT / 'src/humanoid_description/launch/display.launch.py'
+    tree = ast.parse(path.read_text())
+    found = False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(t, ast.Name) and t.id == 'robot_description' for t in node.targets):
+            continue
+        value = node.value
+        if not isinstance(value, ast.Call) or not isinstance(value.func, ast.Name):
+            continue
+        if value.func.id != 'ParameterValue':
+            continue
+        found = any(
+            k.arg == 'value_type' and isinstance(k.value, ast.Name) and k.value.id == 'str'
+            for k in value.keywords
+        )
+    assert found, 'robot_description must be ParameterValue(..., value_type=str)'

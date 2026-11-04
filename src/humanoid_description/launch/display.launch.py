@@ -6,6 +6,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -16,7 +17,8 @@ def generate_launch_description():
     urdf_path = PathJoinSubstitution(
         [FindPackageShare("humanoid_description"), "urdf", "humanoid.urdf.xacro"]
     )
-    robot_description = Command(["xacro ", urdf_path])
+    # robot_description contains XML; ROS 2 Humble must not infer YAML from it.
+    robot_description = ParameterValue(Command(["xacro ", urdf_path]), value_type=str)
 
     robot_state_publisher = Node(
         package="robot_state_publisher",
