@@ -26,6 +26,7 @@ setup(
     entry_points={
         "console_scripts": [
             "state_estimator = humanoid_state_estimator.state_estimator_node:main",
+            "com_estimator = humanoid_state_estimator.com_estimator_node:main",
         ],
     },
 )

@@ -26,6 +26,7 @@ setup(
     entry_points={
         "console_scripts": [
             "balance_controller = humanoid_balance_controller.balance_controller_node:main",
+            "com_balance_controller = humanoid_balance_controller.com_balance_node:main",
         ],
     },
 )
