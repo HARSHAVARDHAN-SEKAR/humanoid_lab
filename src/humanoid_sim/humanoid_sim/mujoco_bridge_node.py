@@ -33,10 +33,12 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState, Imu
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float64, Bool
+from std_msgs.msg import Float64, Bool, Int32
 
 import mujoco
+from std_msgs.msg import Float64MultiArray
 from humanoid_kinematics.planar_leg import PlanarLegKinematics
+from humanoid_sim.contact_force import foot_ground_normal_loads, support_polygon_from_contacts
 
 ACTUATOR_JOINTS = [
     "right_hip_yaw_joint", "right_hip_roll_joint", "right_hip_pitch_joint",
@@ -82,8 +84,15 @@ class MujocoBridgeNode(Node):
             mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SENSOR, "left_foot_touch")]
 
         self._floor_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "floor")
+        self._left_foot_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "left_foot_geom")
+        self._right_foot_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "right_foot_geom")
         self._base_friction = self.model.geom_friction[self._floor_geom_id].copy()
         self._base_forcerange = self.model.actuator_forcerange.copy()
+        self._push_torso_id = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_BODY, "torso"
+        )
+        self._push_force_x = 0.0
+        self._push_end_sim_time = -1.0
 
         # Both models start in a kinematically consistent crouched stance.
         # A fixed-base rig provides mechanical torso support; the dynamic-base
@@ -111,14 +120,32 @@ class MujocoBridgeNode(Node):
         self.imu_pub = self.create_publisher(Imu, "/imu/torso", 50)
         self.left_force_pub = self.create_publisher(Float64, "left_foot_force", 50)
         self.right_force_pub = self.create_publisher(Float64, "right_foot_force", 50)
+        self.support_polygon_valid_pub = self.create_publisher(
+            Bool, "/mujoco_bridge/support_polygon_valid", 50
+        )
+        self.support_margin_pub = self.create_publisher(
+            Float64, "/mujoco_bridge/support_margin_m", 50
+        )
+        self.support_contacts_pub = self.create_publisher(
+            Int32, "/mujoco_bridge/loaded_foot_contact_points", 50
+        )
         self.height_pub = self.create_publisher(Float64, "/mujoco_bridge/torso_height", 50)
         self.pose_pub = self.create_publisher(PoseStamped, "/mujoco_bridge/torso_pose", 50)
+        # Debug-only complete simulation configuration for offline video replay.
+        # Not a sensor estimate and must never be used by a robot controller.
+        self.debug_qpos_pub = self.create_publisher(
+            Float64MultiArray, "/mujoco_bridge/debug_freebase_qpos", 50
+        )
 
         self.create_subscription(JointState, "/mujoco_bridge/joint_commands", self._on_joint_commands, 20)
         self.create_subscription(Float64, "~/inject_imu_delay", self._on_inject_imu_delay, 10)
         self.create_subscription(Bool, "~/inject_joint_dropout", self._on_inject_joint_dropout, 10)
         self.create_subscription(Float64, "~/inject_friction_scale", self._on_inject_friction, 10)
         self.create_subscription(Float64, "~/inject_torque_limit_scale", self._on_inject_torque_limit, 10)
+        self.create_subscription(
+            Float64, "~/inject_torso_push_x",
+            self._on_inject_torso_push_x, 10
+        )
 
         rate = self.get_parameter("sim_publish_rate_hz").value
         self._dt = self.model.opt.timestep
@@ -166,6 +193,35 @@ class MujocoBridgeNode(Node):
         self.model.actuator_forcerange[:] = self._base_forcerange * scale
         self.get_logger().warn(f"[fault] actuator torque limits scaled to {scale:.2f}x")
 
+    def _on_inject_torso_push_x(self, msg: Float64):
+        force = float(msg.data)
+
+        if self.model.nq != 19:
+            self.get_logger().warn(
+                "Torso push rejected: model is not free-floating"
+            )
+            return
+
+        if not np.isfinite(force) or abs(force) > 45.0:
+            self.get_logger().warn(
+                "Torso push rejected: force must be finite and <= 45 N"
+            )
+            return
+
+        if self.data.time < self._push_end_sim_time:
+            self.get_logger().warn(
+                "Torso push rejected: another pulse is active"
+            )
+            return
+
+        self._push_force_x = force
+        self._push_end_sim_time = float(self.data.time) + 0.1
+
+        self.get_logger().info(
+            f"Applying {force:.1f} N X-force "
+            "for 0.1 simulated seconds"
+        )
+
     # -- sim loop -------------------------------------------------------------
 
     def _tick(self):
@@ -181,6 +237,13 @@ class MujocoBridgeNode(Node):
                 self.data.ctrl[aid] = float(np.clip(self.data.qpos[qpos_index], lo, hi))
             self._last_command_time = now
         for _ in range(self._steps_per_tick):
+            self.data.xfrc_applied[self._push_torso_id, :] = 0.0
+
+            if self.data.time < self._push_end_sim_time:
+                self.data.xfrc_applied[
+                    self._push_torso_id, 0
+                ] = self._push_force_x
+
             mujoco.mj_step(self.model, self.data)
 
         now = self.get_clock().now()
@@ -215,8 +278,31 @@ class MujocoBridgeNode(Node):
                 _, queued = self._imu_queue.popleft()
                 self.imu_pub.publish(queued)
 
-        self.left_force_pub.publish(Float64(data=float(self.data.sensordata[self._left_touch_adr])))
-        self.right_force_pub.publish(Float64(data=float(self.data.sensordata[self._right_touch_adr])))
+        if self.model.nq == 19:  # free-base Stage 6: measure real floor/foot solver forces
+            left_load, right_load = foot_ground_normal_loads(
+                self.model, self.data, self._floor_geom_id,
+                self._left_foot_geom_id, self._right_foot_geom_id,
+            )
+        else:  # preserve Stage 1-5 supported-model touch-sensor behavior
+            left_load = float(self.data.sensordata[self._left_touch_adr])
+            right_load = float(self.data.sensordata[self._right_touch_adr])
+        self.left_force_pub.publish(Float64(data=left_load))
+        self.right_force_pub.publish(Float64(data=right_load))
+        if self.model.nq == 19:
+            support = support_polygon_from_contacts(
+                self.model, self.data, self._floor_geom_id,
+                self._left_foot_geom_id, self._right_foot_geom_id
+            )
+            self.support_polygon_valid_pub.publish(
+                Bool(data=bool(support["valid"]))
+            )
+            self.support_margin_pub.publish(Float64(
+                data=float(support["margin_m"])
+                if support["margin_m"] is not None else float("nan")
+            ))
+            self.support_contacts_pub.publish(Int32(
+                data=int(support["loaded_contact_points"])
+            ))
         torso_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "torso")
         pos = self.data.xpos[torso_id]
         self.height_pub.publish(Float64(data=float(pos[2])))
@@ -228,6 +314,11 @@ class MujocoBridgeNode(Node):
         pose.pose.orientation.w, pose.pose.orientation.x = float(qw), float(qx)
         pose.pose.orientation.y, pose.pose.orientation.z = float(qy), float(qz)
         self.pose_pub.publish(pose)
+        if self.model.nq == 19:
+            self.debug_qpos_pub.publish(Float64MultiArray(
+                data=[float(self.data.time)] +
+                [float(v) for v in self.data.qpos]
+            ))
 
 
 def main(args=None):

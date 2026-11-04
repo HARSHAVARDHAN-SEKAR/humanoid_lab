@@ -1,5 +1,14 @@
 # HUMANOID-LAB
 
+
+## November 2026 experimental update
+
+- [Stage 4 supported-stepping demonstration](docs/STAGE4_SUPPORTED_STEPPING_VIDEO.md): four commanded steps with a world-fixed torso (not unsupported walking).
+- [Stage 6 ROS free-base push-recovery experiments](docs/STAGE6_ROS_PUSH_RECOVERY_VALIDATION_2026-11-04.md): simulated CoM ankle-PD recovery, 91 passing host tests and explicit contact-polygon diagnostics.
+- [Stage 6 forward 40 N video](docs/media/stage6n_ros_40N_forward.mp4) and [backward 40 N video](docs/media/stage6n_ros_40N_backward.mp4). The backward 40 N *continuous two-dimensional support* diagnostic failed (39/325 invalid polygon samples in Stage 6L).
+
+**This is an experimental ROS 2/MuJoCo research prototype; dynamic free-base walking is not yet validated.** Historical verification notes below describe earlier revisions; consult the linked Stage 6 report for the latest measurements.
+
 **ROS 2 + MuJoCo simplified humanoid locomotion, state estimation and fault-aware control.**
 
 [![Python and MuJoCo regression tests](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml/badge.svg)](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml)
