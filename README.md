@@ -1,164 +1,131 @@
 # HUMANOID-LAB
 
+**ROS 2 Humble · MuJoCo · 12-DOF simplified biped · Gait planning · CoM balance · Safety supervision**
 
-## November 2026 experimental update
+[![Regression tests](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml/badge.svg)](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml)
 
-- [Stage 4 supported-stepping demonstration](docs/STAGE4_SUPPORTED_STEPPING_VIDEO.md): four commanded steps with a world-fixed torso (not unsupported walking).
-- [Stage 6 ROS free-base push-recovery experiments](docs/STAGE6_ROS_PUSH_RECOVERY_VALIDATION_2026-11-04.md): simulated CoM ankle-PD recovery, 91 passing host tests and explicit contact-polygon diagnostics.
-- [Stage 6 forward 40 N video](docs/media/stage6n_ros_40N_forward.mp4) and [backward 40 N video](docs/media/stage6n_ros_40N_backward.mp4). The backward 40 N *continuous two-dimensional support* diagnostic failed (39/325 invalid polygon samples in Stage 6L).
+> **Research prototype — simulation only.** The repository has two distinct demonstrations: **supported stepping with a world-fixed torso** and **free-floating standing / push recovery using experimental CoM-based ankle feedback**. It does **not** demonstrate independent, dynamically balanced walking or real-robot safety.
 
-**This is an experimental ROS 2/MuJoCo research prototype; dynamic free-base walking is not yet validated.** Historical verification notes below describe earlier revisions; consult the linked Stage 6 report for the latest measurements.
+## Watch the demos
 
-**ROS 2 + MuJoCo simplified humanoid locomotion, state estimation and fault-aware control.**
+| Experiment | Video | What it demonstrates |
+| --- | --- | --- |
+| **Stage 4: Supported stepping** | [Four-step MuJoCo screen recording](docs/media/stage4_supported_stepping.mp4) | ROS mission manager, gait targets, leg IK and observed joint motion. World-fixed torso. |
+| **Stage 6N: +40 N forward push** | [Free-base ROS simulation replay](docs/media/stage6n_ros_40N_forward.mp4) | Recorded simulator poses under ROS 2 CoM ankle-PD feedback. |
+| **Stage 6N: −40 N backward push** | [Free-base ROS simulation replay](docs/media/stage6n_ros_40N_backward.mp4) | Posture recovery, with an identified limitation in contact-polygon continuity. |
 
-[![Python and MuJoCo regression tests](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml/badge.svg)](https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab/actions/workflows/tests.yml)
+Stage 6N MP4s are offline visual replays of **recorded ROS-controlled MuJoCo states**, not independent physics simulations or hardware footage.
 
-> **Status: Engineering research prototype; NOT a validated free-standing or dynamically walking humanoid.**
-> The default physics model is a **fixed-torso support rig** so actuator control,
-> foot IK and supported stepping can be investigated independently of free-base
-> balance. The separate free-floating model remains experimental. A simulator
-> launch, a published swing trajectory or a green unit test is **not evidence
-> that unsupported humanoid walking works**. See [stage status](docs/STAGE_STATUS.md).
+## Verified status — 4 November 2026
 
-## What it demonstrates
+The Ubuntu Docker run built the ROS 2 Humble image and all 12 colcon packages. **91/91 Python/MuJoCo regression tests passed**; see [captured test output](results/validation/stage6_latest_docker_pytest.txt).
 
-- Twelve-DOF simplified biped modeled in MuJoCo and URDF/xacro.
-- ROS 2 MuJoCo bridge publishing IMU, joint states, torso pose, height, and simulated foot forces.
-- Analytic two-link sagittal-plane leg FK/IK and quintic swing trajectories.
-- **One authoritative joint-command node** that combines leg IK with ankle feedback and limits. Rejects out-of-reach requests; holds measured posture on stale feedback or safety faults.
-- Complementary IMU estimator and force-based contact detection.
-- Mission FSM, gait sequencer and integrated safety supervisor (fault/hold/reset).
-- Fault injection (stale IMU, joint dropout, floor friction, actuator torque limits).
-- Tested offline math and a separate reproducible **supported-base** MuJoCo motor/foot-swing trial; CSV/JSON logging.
-- ROS 2 Humble Docker image, optional RViz on Linux/X11, and GitHub Actions.
+**Stage 4:** the ROS gait planner logged four commanded swing steps, **right → left → right → left**, followed by `Commanded swing sequence complete`. This verifies command-sequence completion, **not** measured touchdown accuracy or unsupported translation.
 
-The default control backend is a custom ROS 2 to MuJoCo bridge, **not**
-`mujoco_ros2_control`. The configuration in `humanoid_hardware/` documents
-an alternate future integration and is not an implemented controller-manager
-plugin. The kinematics are 2D sagittal IK, not full-body inverse dynamics.
-This is a model of a simplified biped, **not** a Unitree G1.
+**Stage 6L:** separate ROS free-base disturbance tests yielded:
 
-## Start on Ubuntu using Docker
+| Metric | +40 N forward | −40 N backward |
+| --- | ---: | ---: |
+| Peak CoM X displacement | 18.37 mm | 35.74 mm |
+| Maximum torso tilt | 3.202° | 4.212° |
+| Final CoM X displacement | +0.11 mm | −0.16 mm |
+| Valid post-push 2D support polygons | **325/325** | **286/325** |
+| Invalid/degenerate polygons | **0** | **39** |
+| Minimum margin among *valid* polygons | 41.98 mm | 33.43 mm |
+| Posture/recovery diagnostic | PASS | PASS |
+| Strict continuous-support diagnostic | **PASS** | **FAIL** |
 
-Prerequisites: `docker`, Docker daemon running, `make`, internet access for
-the first `docker build` to fetch the ROS image, apt and Python packages.
-You do **not** need ROS 2 installed on your Ubuntu host.
+Stage 6M grouped the 39 backward invalid samples into **one approximately 0.78-second interval** (about 2.14–2.90 seconds in that trial). Both feet continued carrying measured load, but loaded contacts do not necessarily form a usable two-dimensional polygon. The backward case must remain **FAIL** under the strict criterion.
+
+Earlier corrected **Stage 6J +20 N** ROS telemetry: 8.95 mm peak CoM X displacement, 1.603° maximum torso tilt, and 0.06 mm final displacement. The Stage 6N video runs are separate trials with their own sampling; their outcomes must not be conflated with the Stage 6L measurements.
+
+[Read the complete ROS push-recovery report](docs/STAGE6_ROS_PUSH_RECOVERY_VALIDATION_2026-11-04.md) and [Stage 6M contact-window analysis](results/validation/stage6m_contact_window_summary.json). Raw measured traces are in [`results/validation/`](results/validation/).
+
+## Architecture
+
+```text
+                    ROS 2 mission / safety supervision
+                                 |
+           +---------------------+--------------------+
+           |                                          |
+ Stage 4: supported stepping               Stage 6: free-base standing
+           |                                          |
+    Footstep + swing planner                MuJoCo torso pose + joint states
+           |                                          |
+    Sagittal leg inverse IK                 Experimental CoM estimator
+           |                                          |
+    Motion joint controller                 CoM X/velocity ankle-PD feedback
+           |                                          |
+           +---------------------+--------------------+
+                                 |
+                   /mujoco_bridge/joint_commands
+                                 |
+                     12-actuator MuJoCo biped
+                                 |
+                     Joint/contact/pose feedback
+```
+
+These are **different launch/controller configurations**. Do not run both command publishers against the same bridge simultaneously.
+
+Implemented modules include the supported and floating-base MuJoCo models, URDF/xacro description, 2D sagittal FK/IK, footstep and swing planning, command arbitration within each pipeline, ROS 2 CoM feedback, safety and stale-data gating, opt-in bounded push injection, solver-derived foot-force telemetry, support-polygon diagnostics, and reproducible video capture.
+
+**Estimator boundary:** Stage 6 uses simulator-provided base pose plus joint feedback. It is not an independently validated sensor-only localization or state-estimation solution. `humanoid_hardware/` contains example configuration, not an active physical robot interface. This project is **not** a Unitree G1 implementation or an active `mujoco_ros2_control` plugin.
+
+## Quick start (Ubuntu + Docker)
+
+Requirements: Docker with user access to its daemon, GNU Make, and network access for the first image build. ROS 2 Humble runs inside Docker; it is not required on the Ubuntu host.
 
 ```bash
-cd humanoid_lab_ws
-make build                # ROS 2 Humble + MuJoCo + colcon build
-make test                 # run all Python tests, including MuJoCo-dependent tests in Docker
-make smoke                # exercise actual ROS 2 nodes/topics inside Docker
-make validate-supported   # physical simulation of fixed-torso stepping; writes CSV+JSON to results/local/
-make stage2               # ROS 2 headless fixed-torso standing/reference loop
-make stage3               # ROS 2 headless fixed-torso stepping pipeline (autostarts)
+git clone --branch experiment/stage6-freebase-balance \
+  https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab.git
+cd humanoid_lab
+
+make test                  # build Docker image; run regression tests
+make validate-supported    # fixed-torso physics benchmark
+make stage4                # headless four-step supported gait sequence
 ```
 
-All stage targets are headless by default. `make stage4` exercises mission
-sequencing and supported stepping; it does **not** establish successful
-free-base walking. Stage 5 brings up the supervisor and logger:
+`make stage4` runs the **world-fixed-torso** mission-controlled stepping demonstration. It does **not** produce an unsupported walk. See [Stage 4 demonstration notes](docs/STAGE4_SUPPORTED_STEPPING_VIDEO.md).
+
+To reproduce the **Stage 6N** videos from the repository root on Ubuntu:
 
 ```bash
-make stage4
-make stage5
+bash scripts/stage6n_make_ros_sim_video.sh both
 ```
 
-To run the experimental **free-floating model** (expected to have unsolved
-balance problems), use:
+This runs separate forward/backward 40 N ROS experiments, captures the simulated base/joint poses and renders MP4 files under `results/local/` (Git-ignored). The published videos are in [`docs/media/`](docs/media/). Small numeric differences between separate trials are expected.
 
-```bash
-make stage2 ARGS="model_file:=humanoid_biped.xml"
-```
+**Reproducibility caveat:** the committed Stage 6J–L CSVs are real measured evidence, but the original local probe-helper scripts used for some of those runs were not all committed. Do not assume a single command reproduces the exact published Stage 6L CSVs. The Stage 6N capture script is committed.
 
-To use RViz on an Ubuntu desktop with X11:
+## Scope and limitations
 
-```bash
-make stage3-gui
-```
+| Area | Demonstrated | Still required |
+| --- | --- | --- |
+| Supported locomotion | Four commanded alternating swing steps; joint motion | Free-base walking, measured pelvis travel and landing accuracy |
+| Free-base standing | Bounded sagittal pushes with ROS CoM ankle-PD recovery | Continuous valid support under backward 40 N; robust multi-direction balance |
+| Contact monitoring | Measured normal loads, contact geometry and projected CoM margin | Reliable edge-contact recovery and dynamic contact stability |
+| Estimation | CoM reconstructed from simulator base pose and joint state | Sensor-only robust base and CoM state estimation |
+| Safety | Simulation supervision and fault handling | Hardware-relevant validation and torque/impact safety |
 
-See [docs/DOCKER.md](docs/DOCKER.md) for Docker permissions, custom commands,
-CLI fault injection, logs and debugging.
+**Next technical milestones:** investigate backward foot-edge rocking; run matched feedback-on/off controls; design contact-aware ankle/hip correction, lateral weight shift and footstep recovery; then measure pelvis translation and touchdown before claiming independent dynamic walking.
 
-## Tests without ROS 2
+## Repository guide
 
-With Python 3.10+:
+- [`src/humanoid_sim/`](src/humanoid_sim/) — MuJoCo models and ROS 2 bridge
+- [`src/humanoid_kinematics/`](src/humanoid_kinematics/) — leg kinematics
+- [`src/humanoid_gait_planner/`](src/humanoid_gait_planner/) — footstep and swing planning
+- [`src/humanoid_motion_controller/`](src/humanoid_motion_controller/) — supported-gait joint references
+- [`src/humanoid_state_estimator/`](src/humanoid_state_estimator/) — state estimation
+- [`src/humanoid_balance_controller/`](src/humanoid_balance_controller/) — ankle balance logic
+- [`src/humanoid_mission_manager/`](src/humanoid_mission_manager/) — mission state machine
+- [`src/humanoid_safety/`](src/humanoid_safety/) — safety supervision
+- [`scripts/`](scripts/) — experiment, diagnostic and video workflows
+- [`tests/`](tests/) — automated regression tests
 
-```bash
-python3 -m pip install -r requirements.txt
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q -rs
-```
+Further reading: [architecture](docs/ARCHITECTURE.md), [Stage 4 supported video](docs/STAGE4_SUPPORTED_STEPPING_VIDEO.md), [Stage 6N replay method](docs/STAGE6N_ROS_VIDEO.md), [Stage 6 ROS validation](docs/STAGE6_ROS_PUSH_RECOVERY_VALIDATION_2026-11-04.md), [earlier offline balance experiments](docs/STAGE6_VALIDATION_2026-11-04.md), [roadmap](docs/ROADMAP.md).
 
-If `mujoco` is absent, physics-dependent tests are skipped; **do not report
-those as passing**. Independently in this sandbox, 70 pure-Python/XML/source
-contract tests passed and two physics-test modules were skipped due to no
-MuJoCo installation. A separate Ubuntu 22.04 host **successfully built** the Docker image and ran
-`make validate-supported` (see [host validation log](docs/HOST_VALIDATION_2026-11-04.md)).
-The initial host `make test`/`make smoke` attempts failed because of a pytest
-plugin conflict and Bash `nounset`, respectively. The fixes in this revision
-are not yet rerun on that host. The GitHub Actions job is designed to rerun the pure-Python/MuJoCo checks
-and save trial artifacts. Full ROS smoke verification still needs rerunning on the host.
-
-## Validation before you claim a demonstration
-
-| Stage | Minimum evidence before marking it finished |
-|---|---|
-| 1. Model + joint control | Container builds; actuator/joint feedback responds to commands in MuJoCo |
-| 2. Standing + balance | Supported rig benchmark; **separately** show >=30 s unsupported physically upright |
-| 3. Stepping | Measured swing-foot lift and tracking in supported rig; unsupported step independently validated |
-| 4. Continuous walking | Free-base walking distance measured with video and CSV; repeat trials |
-| 5. Push recovery | Repeat controlled pushes, log success rates and limits; verify safety fault containment |
-
-**Currently none of the full unsupported Stage 2–5 criteria are claimed as
-achieved.** The included offline trial checks the narrower supported-rig
-scope; its pass/fail result must be generated on your own machine, not taken
-from this README.
-
-## Package organization
-
-```
-src/
-  humanoid_description/         URDF/xacro, robot dimensions, RViz
-  humanoid_sim/                 supported + floating MJCF, MuJoCo ROS bridge
-  humanoid_hardware/            ros2_control config only (not active)
-  humanoid_kinematics/          analytic 2D leg FK/IK
-  humanoid_state_estimator/     IMU filter and foot contacts
-  humanoid_balance_controller/ ankle strategy and capture point
-  humanoid_gait_planner/        alternating footstep + swing trajectory
-  humanoid_motion_controller/  IK -> 12 actuator targets; safety gating
-  humanoid_safety/             watchdog/fault FSM, injectable faults
-  humanoid_mission_manager/    high-level mission FSM
-  humanoid_bringup/            stages 1-5 launches and parameters
-  humanoid_benchmarks/         logging, measured metrics, supported physics trial
-```
-
-Read the [architecture](docs/ARCHITECTURE.md), [limitations/status](docs/STAGE_STATUS.md)
-and [remaining research milestones](docs/ROADMAP.md) before citing this project
-in a CV or interview.
-
-## Publish
-
-Do this **after running `make test` and `make validate-supported` on your own computer**.
-The existing public repository is `HARSHAVARDHAN-SEKAR/humanoid_lab` (currently empty). Run:
-
-```bash
-cd humanoid_lab_ws
-git init
-git add -A
-git commit -m "HUMANOID-LAB: supported biped control and safety research prototype"
-git branch -M main
-git remote add origin https://github.com/HARSHAVARDHAN-SEKAR/humanoid_lab.git
-git push -u origin main
-```
-
-Alternatively, run `bash scripts/publish_github.sh` from the workspace root.
-The script targets the *existing* `humanoid_lab` repository and never force-pushes.
-
-Use `gh auth login` or GitHub authentication when Git asks; HTTPS pushes
-require a token/credential manager, not your GitHub account password.
-GitHub description suggestion: **"ROS 2/MuJoCo 12-DOF humanoid control
-research: supported gait IK, balance, fault-aware supervision, reproducible
-physics tests; unsupported walking in development."**
+Older host-validation and stage-status notes describe earlier milestones; use the dated latest ROS validation report for current measurements.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
